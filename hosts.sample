@@ -1,0 +1,16 @@
+[lab]
+test01 ansible_host=1.2.3.4
+
+[all:vars]
+customerID=5330101
+customerName=LDP-UNIX
+besgroup="{{customerName}}%20-%20{{customerID}}"
+besrelay=besmaster.datapipe.net
+besclient_url=https://d3oaojvgmti3yr.cloudfront.net/BES-universal-installer.tbz
+sys_timezone=UTC
+ansible_user=ec2-user
+ansible_ssh_private_key_file=keys/client-key
+ansible_ssh_common_args='-o ControlMaster=auto -o ProxyCommand="ssh -W %h:%p -q -i keys/bast.key ec2-user@5.6.7.8"'
+# do not install security updates in dpmanaged role
+securityUpdate=0
+

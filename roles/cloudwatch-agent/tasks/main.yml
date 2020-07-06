@@ -1,0 +1,84 @@
+---
+- name: Enable EPEL repo on centos and redhat
+  yum_repository:
+    name: epel
+    enabled: yes
+    metalink: https://mirrors.fedoraproject.org/metalink?repo=epel-{{ansible_distribution_major_version}}&arch=$basearch
+    failovermethod: priority
+    description: epel
+    gpgcheck: 1
+  when: ansible_distribution != "Amazon"
+
+- name: Enable EPEL repo on amzn1
+  yum_repository:
+    name: epel
+    enabled: yes 
+    metalink: https://mirrors.fedoraproject.org/metalink?repo=epel-6&arch=$basearch
+    failovermethod: priority
+    description: epel
+    gpgcheck: 1
+  when: 
+    - ansible_distribution == "Amazon"
+    - ansible_distribution_version == '1'
+
+- name: Enable EPEL repo on amzn2
+  yum_repository:
+    name: epel
+    enabled: yes
+    metalink: https://mirrors.fedoraproject.org/metalink?repo=epel-7&arch=$basearch
+    failovermethod: priority
+    description: epel
+    gpgcheck: 1
+  when: 
+    - ansible_distribution == "Amazon" 
+    - ansible_distribution_version == '2'
+
+- name: Import EPEL GPG key
+  rpm_key:
+    key: "{{item}}"
+    state: present
+  with_items:
+    - https://archive.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-6
+    - https://archive.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
+
+- name: Install collectd
+  yum:
+    name: collectd
+    state: installed
+    update_cache: yes
+
+- name: Enable and startup collectd
+  service:
+    name: collectd
+    state: started
+    enabled: yes
+
+- name: Install cloudwatch agent (AmazonLinux)
+  yum:
+    name: https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
+    state: installed
+  when: ansible_distribution == "Amazon"
+
+- name: Install cloudwatch agent (CentOS)
+  yum:
+    name: https://s3.amazonaws.com/amazoncloudwatch-agent/centos/amd64/latest/amazon-cloudwatch-agent.rpm
+    state: installed
+  when: ansible_distribution == "CentOS"
+
+- name: Install cloudwatch agent (RedHat)
+  yum:
+    name: https://s3.amazonaws.com/amazoncloudwatch-agent/redhat/amd64/latest/amazon-cloudwatch-agent.rpm
+    state: installed
+  when: ansible_distribution == "RedHat"
+
+- name: Create standard cloudwatch agent config
+  template:
+    src: config.json
+    dest: /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+    mode: '0644'
+
+- name: Enable and start cloudwatch agent
+  service:
+    name: amazon-cloudwatch-agent
+    state: started
+    enabled: yes
